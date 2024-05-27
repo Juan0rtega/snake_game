@@ -12,34 +12,29 @@ class Snake:
         self.current_mov_axis = X_AXIS
         self.screen_size = screen_size
         self.direction = 1
+        self.body_rects : list[pygame.Rect] = []
+        self.color = (255,255,255)
+
         x_pos = start_pos[0]
         
         for _ in range(length):
             self.body.append([x_pos, start_pos[1]])
+            self.body_rects.append(pygame.Rect(x_pos, start_pos[1], CHUNK_SIZE, CHUNK_SIZE))
             x_pos -= 10
         
     def update(self, surf):
-        for pos in self.body:
-            pygame.draw.rect(surf, (255,255,255), pygame.Rect(pos[0], pos[1], CHUNK_SIZE, CHUNK_SIZE))
+        for rect in self.body_rects:
+            pygame.draw.rect(surf, self.color, rect)
+        
             
     def move(self):
-        if self.current_mov_axis == X_AXIS:
-            new_value = [self.body[0][0] + (self.direction * CHUNK_SIZE), self.body[0][1]]
-        if self.current_mov_axis == Y_AXIS:
-            new_value = [self.body[0][0], self.body[0][1] + (self.direction * CHUNK_SIZE)]
-
-            
-        for i in range(len(self.body)):
-            previous_value = self.body[i]
-            
-            if(new_value[0] > 600): new_value[0] = 0
-            if(new_value[0] < 0): new_value[0] = 600
-            
-            if(new_value[1] > 600): new_value[1] = 0
-            if(new_value[1] < 0): new_value[1] = 600
-            
-            self.body[i] = new_value
-            new_value = previous_value
+        offset = (self.direction * CHUNK_SIZE, 0) if self.current_mov_axis == X_AXIS else (0, self.direction * CHUNK_SIZE)
+        
+        new_rect = self.body_rects[0].move(*offset)
+        for pos in range(len(self.body_rects)):
+            copy_rect = self.body_rects[pos]
+            self.body_rects[pos] = new_rect
+            new_rect = copy_rect
             
     def change_direction(self, keys) -> None:
         if not (keys[pygame.K_d] or keys[pygame.K_a]):
@@ -60,4 +55,13 @@ class Snake:
         self.current_mov_axis = Y_AXIS if self.current_mov_axis == X_AXIS else X_AXIS
     
     def add_chunk(self):
-        self.body.append([])
+        self.body_rects.append(self.body_rects[-1].copy())
+        
+    def get_head(self) -> pygame.Rect:
+        return self.body_rects[0]
+    
+    def get_body(self) -> list[pygame.Rect]:
+        return self.body_rects[1:]
+    
+    def set_color(self, color) -> None:
+        self.color = color
